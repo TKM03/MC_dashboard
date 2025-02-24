@@ -4,12 +4,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from pyvirtualdisplay import Display
 from datetime import datetime
 import time
 import numpy as np
@@ -161,10 +162,15 @@ def extract_grid_data_mc(driver):
     return data
 
 def scrape_data(url, user_id, password):
-    """Scrape data from the website using Chrome WebDriver in headless mode."""
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    """Scrape data from the website using Firefox WebDriver in headless mode with a virtual display."""
+    # Start a virtual display for headless browsing
+    display = Display(visible=0, size=(800, 600))
+    display.start()
+
+    firefox_options = FirefoxOptions()
+    firefox_options.add_argument('--headless')
+    driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()), options=firefox_options)
+    
     start_year = 2024
     current_date = datetime.now().strftime('%Y-%m-%d')
     patient_data_by_year = {}
@@ -273,6 +279,7 @@ def scrape_data(url, user_id, password):
         return None, None, None, f"Error: {str(e)}"
     finally:
         driver.quit()
+        display.stop()  # Stop the virtual display
 
 # --- Plotting Functions ---
 def generate_dashboard_charts(patient_data_by_year, claim_data_by_year, mc_data_by_year, year):
