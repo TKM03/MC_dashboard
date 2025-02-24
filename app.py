@@ -161,18 +161,15 @@ def extract_grid_data_mc(driver):
     return data
 
 def scrape_data(url, user_id, password):
-    """Scrape data from the website using Firefox WebDriver in headless mode with specific configurations."""
+    """Scrape data from the website using Firefox WebDriver in headless mode."""
     firefox_options = FirefoxOptions()
     firefox_options.add_argument('--headless')  # Run Firefox in headless mode
     firefox_options.add_argument('--no-sandbox')  # Disable sandbox for better compatibility in cloud environments
     firefox_options.add_argument('--disable-gpu')  # Disable GPU to prevent issues in headless mode
 
-    # Specify Firefox binary path (optional, may help on Streamlit Cloud, but often not needed)
-    # firefox_options.binary_location = "/usr/bin/firefox"  # Uncomment and adjust if needed
-
-    # Use a specific version of GeckoDriver for compatibility
+    # Use GeckoDriverManager without specifying driver_version, letting it auto-select
     driver = webdriver.Firefox(
-        service=Service(GeckoDriverManager(driver_version="0.33.0").install()),  # Pin to a stable version
+        service=Service(GeckoDriverManager().install()),  # Auto-select the latest compatible version
         options=firefox_options
     )
     
