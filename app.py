@@ -1,4 +1,4 @@
-
+%%writefile app.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -161,7 +161,7 @@ def extract_grid_data_mc(driver):
     return data
 
 def scrape_data(url, user_id, password):
-    """Scrape data from the website using Chrome WebDriver in headless mode with a pinned version."""
+    """Scrape data from the website using Chrome WebDriver in headless mode with auto-selected driver version."""
     chrome_options = ChromeOptions()
     chrome_options.add_argument('--headless')  # Run Chrome in headless mode
     chrome_options.add_argument('--no-sandbox')  # Disable sandbox for better compatibility in cloud environments
@@ -170,9 +170,9 @@ def scrape_data(url, user_id, password):
     chrome_options.add_argument('--disable-extensions')  # Disable extensions for stability
     chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36')  # Set a stable user-agent
 
-    # Pin ChromeDriver to a specific version known to work with Streamlit Cloud (e.g., Chrome 114)
+    # Use ChromeDriverManager without specifying version, letting it auto-select the latest compatible version
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager(version="114.0.5735.90").install()),  # Pin to a stable version
+        service=Service(ChromeDriverManager().install()),  # Auto-select the latest compatible version
         options=chrome_options
     )
     
