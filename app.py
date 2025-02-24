@@ -4,12 +4,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime
 import time
 import numpy as np
@@ -161,16 +161,17 @@ def extract_grid_data_mc(driver):
     return data
 
 def scrape_data(url, user_id, password):
-    """Scrape data from the website using Firefox WebDriver in headless mode."""
-    firefox_options = FirefoxOptions()
-    firefox_options.add_argument('--headless')  # Run Firefox in headless mode
-    firefox_options.add_argument('--no-sandbox')  # Disable sandbox for better compatibility in cloud environments
-    firefox_options.add_argument('--disable-gpu')  # Disable GPU to prevent issues in headless mode
+    """Scrape data from the website using Chrome WebDriver in headless mode."""
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument('--headless')  # Run Chrome in headless mode
+    chrome_options.add_argument('--no-sandbox')  # Disable sandbox for better compatibility in cloud environments
+    chrome_options.add_argument('--disable-gpu')  # Disable GPU to prevent issues in headless mode
+    chrome_options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
 
-    # Use GeckoDriverManager without specifying driver_version, letting it auto-select
-    driver = webdriver.Firefox(
-        service=Service(GeckoDriverManager().install()),  # Auto-select the latest compatible version
-        options=firefox_options
+    # Use ChromeDriverManager to install the latest compatible version
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),  # Auto-select the latest compatible version
+        options=chrome_options
     )
     
     start_year = 2024
