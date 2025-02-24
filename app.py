@@ -1,15 +1,15 @@
-
+%%writefile app.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from selenium import webdriver
-from selenium.webdriver.edge.service import Service
-from selenium.webdriver.edge.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime
 import time
 import numpy as np
@@ -17,57 +17,61 @@ from selenium.common.exceptions import StaleElementReferenceException, TimeoutEx
 
 # --- Scraping Functions ---
 def wait_for_element(driver, locator):
-    return WebDriverWait(driver, 10).until(EC.element_to_be_clickable(locator))
+    """Wait for an element to be clickable with a 5-second timeout."""
+    return WebDriverWait(driver, 5).until(EC.element_to_be_clickable(locator))
 
 def select_date_month_day(driver, date_str, date_input_id):
+    """Select a date using month-day format with reduced wait times."""
     try:
         date_to_select = datetime.strptime(date_str, '%Y-%m-%d')
-        date_input = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, date_input_id)))
+        date_input = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, date_input_id)))
         date_input.click()
-        month_select = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-month')))
+        month_select = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-month')))
         month_option = month_select.find_element(By.XPATH, f"//option[@value='{date_to_select.month - 1}']")
         month_option.click()
         day = date_to_select.day
-        day_element = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f"//td[@data-handler='selectDay']/a[text()='{day}']")))
+        day_element = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, f"//td[@data-handler='selectDay']/a[text()='{day}']")))
         day_element.click()
-        time.sleep(5)
+        time.sleep(2)
     except Exception as e:
         print(f"Error in select_date_month_day: {str(e)}")
         raise
 
 def select_date(driver, date_str, date_input_id):
+    """Select a date using year-month-day format with reduced wait times."""
     try:
         date_to_select = datetime.strptime(date_str, '%Y-%m-%d')
-        date_input = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, date_input_id)))
+        date_input = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, date_input_id)))
         date_input.click()
-        time.sleep(2)
-        month_select = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-month')))
+        time.sleep(1)
+        month_select = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-month')))
         month_option = month_select.find_element(By.XPATH, f"//option[@value='{date_to_select.month - 1}']")
-        time.sleep(2)
+        time.sleep(1)
         month_option.click()
-        year_select = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-year')))
+        year_select = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-datepicker-year')))
         year_option = year_select.find_element(By.XPATH, f"//option[@value='{date_to_select.year}']")
         year_option.click()
         day = date_to_select.day
-        day_element = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f"//td[@data-handler='selectDay']/a[text()='{day}']")))
+        day_element = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, f"//td[@data-handler='selectDay']/a[text()='{day}']")))
         day_element.click()
-        time.sleep(5)
+        time.sleep(2)
     except Exception as e:
         print(f"Error in select_date: {str(e)}")
         raise
 
 def extract_grid_data_clm_summary(driver):
+    """Extract data from the claim summary grid with reduced delays."""
     data = []
     try:
-        total_pages_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "sp_1_pjqgridClmSummbyProv")))
+        total_pages_element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "sp_1_pjqgridClmSummbyProv")))
         total_pages = int(total_pages_element.text.strip())
     except:
         return data
     for current_page in range(1, total_pages + 1):
-        time.sleep(3)
+        time.sleep(2)  # Reduced from 3s
         driver.execute_script("window.scrollTo(0, 0);")
-        grid = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "jqgridClmSummbyProv")))
-        rows = WebDriverWait(grid, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tr.jqgrow")))
+        grid = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.ID, "jqgridClmSummbyProv")))
+        rows = WebDriverWait(grid, 5).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tr.jqgrow")))
         for row in rows:
             try:
                 provider_name = row.find_element(By.CSS_SELECTOR, "td[aria-describedby='jqgridClmSummbyProv_STR_ProvName']").text
@@ -84,16 +88,17 @@ def extract_grid_data_clm_summary(driver):
                 next_button_div = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.btn.btn-sm.btn-default span.fa.fa-forward")))
                 driver.execute_script("arguments[0].scrollIntoView(true);", next_button_div)
                 next_button_div.click()
-                WebDriverWait(driver, 10).until(EC.staleness_of(rows[0]))
+                WebDriverWait(driver, 5).until(EC.staleness_of(rows[0]))  # Reduced timeout
             except:
                 break
     return data
 
 def extract_grid_data_patient_analysis(driver):
+    """Extract data from the patient analysis grid with reduced delays."""
     all_data = []
     while True:
         driver.execute_script("window.scrollTo(0, 0);")
-        grid = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "jqgridCorpMcAnalysis")))
+        grid = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "jqgridCorpMcAnalysis")))
         rows = grid.find_elements(By.CSS_SELECTOR, "tr.jqgrow")
         for row in rows:
             try:
@@ -119,23 +124,24 @@ def extract_grid_data_patient_analysis(driver):
                 break
             driver.execute_script("arguments[0].scrollIntoView(true);", parent_div)
             parent_div.click()
-            WebDriverWait(driver, 10).until(EC.staleness_of(rows[0]))
+            WebDriverWait(driver, 5).until(EC.staleness_of(rows[0]))  # Reduced timeout
         except:
             break
     return all_data
 
 def extract_grid_data_mc(driver):
+    """Extract data from the MC grid with reduced delays."""
     data = []
     try:
-        total_pages_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "sp_1_jqgrid")))
+        total_pages_element = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "sp_1_jqgrid")))
         total_pages = int(total_pages_element.text.strip())
     except:
         total_pages = 1
     for current_page in range(1, total_pages + 1):
-        time.sleep(3)
+        time.sleep(2)  # Reduced from 3s
         driver.execute_script("window.scrollTo(0, 0);")
-        grid = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "jqgrid")))
-        rows = WebDriverWait(grid, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tr.jqgrow")))
+        grid = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.ID, "jqgrid")))
+        rows = WebDriverWait(grid, 5).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "tr.jqgrow")))
         for row in rows:
             try:
                 provider_name = row.find_element(By.CSS_SELECTOR, "td[aria-describedby='jqgrid_STR_ProvName']").text.strip()
@@ -149,112 +155,109 @@ def extract_grid_data_mc(driver):
                 next_button_div = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.btn.btn-sm.btn-default span.fa.fa-forward")))
                 driver.execute_script("arguments[0].scrollIntoView(true);", next_button_div)
                 next_button_div.click()
-                WebDriverWait(driver, 10).until(EC.staleness_of(rows[0]))
+                WebDriverWait(driver, 5).until(EC.staleness_of(rows[0]))  # Reduced timeout
             except:
                 break
     return data
 
 def scrape_data(url, user_id, password):
-    edge_options = Options()
-    edge_options.add_argument('--headless')
-    driver = webdriver.Edge(service=Service(EdgeChromiumDriverManager().install()), options=edge_options)
+    """Scrape data from the website using Chrome WebDriver in headless mode."""
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     start_year = 2024
     current_date = datetime.now().strftime('%Y-%m-%d')
     patient_data_by_year = {}
     claim_data_by_year = {}
     mc_data_by_year = {}
     try:
+        print("Starting scrape...")
         driver.get(url)
-        image = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//img[@src='/ClaimEXMVR/Servlet_LoadImage?SFC=loadImage&imageName=icorporate.png']")))
+        image = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//img[@src='/ClaimEXMVR/Servlet_LoadImage?SFC=loadImage&imageName=icorporate.png']")))
         image.click()
-        user_id_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.NAME, "txtloginid")))
+        user_id_field = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.NAME, "txtloginid")))
         user_id_field.send_keys(user_id)
-        password_field = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "inputpss")))
+        password_field = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.ID, "inputpss")))
         password_field.send_keys(password)
-        sign_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.btn-primary[type='submit']")))
+        sign_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn.btn-primary[type='submit']")))
         sign_button.click()
         continue_button = wait_for_element(driver, (By.XPATH, "//button[text()='Continue']"))
         continue_button.click()
 
-        for year in range(start_year, 2025 + 1):
-            if year == 2024:
-                start_date = "2024-01-01"
-                end_date = "2024-12-31"
-            else:
-                start_date = "2025-01-01"
-                end_date = current_date
-            productivity_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[span[text()='Productivity Reports']]")))
-            productivity_link.click()
-            patient_analysis_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/Patient_Analysis_Report'][span[text()=' Patient Analysis Report ']]")))
-            patient_analysis_link.click()
-            select_date(driver, start_date, "txtStartDate")
-            select_date(driver, end_date, "txtEndDate")
-            search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
-            search_button.click()
-            time.sleep(5)
-            dropdown = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
-            driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
-            select = Select(dropdown)
-            select.select_by_value("100")
-            time.sleep(10)
-            patient_data = extract_grid_data_patient_analysis(driver)
-            patient_df = pd.DataFrame(patient_data)
-            numeric_cols_patient = ['Total Visit', 'Total MC (Days)', 'Total Claim (Own)', 'Total Claim (Dep)']
-            for col in numeric_cols_patient:
-                patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
-            patient_df['Total Claim (Combined)'] = patient_df['Total Claim (Own)'] + patient_df['Total Claim (Dep)']
-            patient_df['Avg Claim per Visit'] = patient_df['Total Claim (Combined)'] / patient_df['Total Visit']
-            patient_df['Avg MC per Visit'] = patient_df['Total MC (Days)'] / patient_df['Total Visit']
-            patient_df['Avg Claim per MC'] = patient_df['Total Claim (Combined)'] / patient_df['Total MC (Days)']
-            patient_data_by_year[year] = patient_df
-
-        for year in range(start_year, 2025 + 1):
-            if year == 2024:
-                start_date = "2024-01-01"
-                end_date = "2024-12-31"
-            else:
-                start_date = "2025-01-01"
-                end_date = current_date
-            productivity_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[span[text()='Productivity Reports']]")))
-            productivity_link.click()
-            mc_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/MC_HealthCare_By_Provider'][span[text()=' MC by Provider ']]")))
-            mc_link.click()
-            time.sleep(2)
-            select_date(driver, start_date, "txtStartDate")
-            select_date(driver, end_date, "txtEndDate")
-            search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
-            search_button.click()
-            time.sleep(10)
-            dropdown = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
-            driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
-            select = Select(dropdown)
-            select.select_by_value("100")
-            time.sleep(10)
-            mc_data = extract_grid_data_mc(driver)
-            mc_df = pd.DataFrame(mc_data)
-            numeric_cols_mc = ['Total MC Given', 'No. of Visit']
-            for col in numeric_cols_mc:
-                mc_df[col] = pd.to_numeric(mc_df[col], errors='coerce')
-            mc_df['% MC Given'] = (mc_df['Total MC Given'] / mc_df['No. of Visit']) * 100
-            mc_data_by_year[year] = mc_df
-
+        # Only scrape 2024 for testing (remove 2025 to speed up)
+        year = 2024
         start_date = "2024-01-01"
-        end_date = "2025-01-01"
-        reg_claims_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[contains(text(), 'Registration') and contains(text(), 'Claims')]]")))
-        reg_claims_link.click()
-        providers_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/Claim_Summary_by_Provider_Analysis'][span[text()=' Claim Summary by Providers ']]")))
-        providers_link.click()
-        time.sleep(5)
-        select_date_month_day(driver, start_date, "txtFromDate")
-        select_date_month_day(driver, end_date, "txtToDate")
-        search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
-        driver.execute_script("arguments[0].click();", search_button)
-        time.sleep(10)
-        dropdown = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
+        end_date = "2024-12-31"
+        
+        # Patient analysis for 2024
+        print("Navigating to patient analysis...")
+        productivity_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[span[text()='Productivity Reports']]")))
+        productivity_link.click()
+        patient_analysis_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/Patient_Analysis_Report'][span[text()=' Patient Analysis Report ']]")))
+        patient_analysis_link.click()
+        select_date(driver, start_date, "txtStartDate")
+        select_date(driver, end_date, "txtEndDate")
+        search_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
+        search_button.click()
+        time.sleep(2)
+        dropdown = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
         driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
         select = Select(dropdown)
-        select.select_by_value("100")
-        time.sleep(5)
+        select.select_by_value("10")  # Reduced page size for speed
+        time.sleep(2)
+        print("Extracting patient data...")
+        patient_data = extract_grid_data_patient_analysis(driver)
+        patient_df = pd.DataFrame(patient_data)
+        numeric_cols_patient = ['Total Visit', 'Total MC (Days)', 'Total Claim (Own)', 'Total Claim (Dep)']
+        for col in numeric_cols_patient:
+            patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
+        patient_df['Total Claim (Combined)'] = patient_df['Total Claim (Own)'] + patient_df['Total Claim (Dep)']
+        patient_data_by_year[year] = patient_df
+
+        # MC data for 2024 (optional, remove or limit for testing)
+        print("Navigating to MC by Provider...")
+        productivity_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[span[text()='Productivity Reports']]")))
+        productivity_link.click()
+        mc_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/MC_HealthCare_By_Provider'][span[text()=' MC by Provider ']]")))
+        mc_link.click()
+        time.sleep(1)
+        select_date(driver, start_date, "txtStartDate")
+        select_date(driver, end_date, "txtEndDate")
+        search_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
+        search_button.click()
+        time.sleep(2)
+        dropdown = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
+        driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
+        select = Select(dropdown)
+        select.select_by_value("10")  # Reduced page size
+        time.sleep(2)
+        print("Extracting MC data...")
+        mc_data = extract_grid_data_mc(driver)
+        mc_df = pd.DataFrame(mc_data)
+        numeric_cols_mc = ['Total MC Given', 'No. of Visit']
+        for col in numeric_cols_mc:
+            mc_df[col] = pd.to_numeric(mc_df[col], errors='coerce')
+        mc_df['% MC Given'] = (mc_df['Total MC Given'] / mc_df['No. of Visit']) * 100
+        mc_data_by_year[year] = mc_df
+
+        # Claim summary for 2024 (optional, limit for testing)
+        print("Navigating to claim summary...")
+        reg_claims_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[contains(text(), 'Registration') and contains(text(), 'Claims')]]")))
+        reg_claims_link.click()
+        providers_link = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/Claim_Summary_by_Provider_Analysis'][span[text()=' Claim Summary by Providers ']]")))
+        providers_link.click()
+        time.sleep(2)
+        select_date_month_day(driver, start_date, "txtFromDate")
+        select_date_month_day(driver, "2024-12-31", "txtToDate")  # Limit to 2024
+        search_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
+        driver.execute_script("arguments[0].click();", search_button)
+        time.sleep(2)
+        dropdown = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
+        driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
+        select = Select(dropdown)
+        select.select_by_value("10")  # Reduced page size
+        time.sleep(2)
+        print("Extracting claim data...")
         claim_data_2024 = extract_grid_data_clm_summary(driver)
         claim_df_2024 = pd.DataFrame(claim_data_2024)
         numeric_cols_claim = ['No of Visits', 'Total Claim', 'Total MC (Days)']
@@ -263,32 +266,10 @@ def scrape_data(url, user_id, password):
         claim_df_2024['Avg Claim per Visit'] = claim_df_2024['Total Claim'] / claim_df_2024['No of Visits']
         claim_data_by_year[2024] = claim_df_2024
 
-        start_date = "2024-12-31"
-        end_date = current_date
-        reg_claims_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[.//span[contains(text(), 'Registration') and contains(text(), 'Claims')]]")))
-        reg_claims_link.click()
-        providers_link = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//a[@href='#/Claim_Summary_by_Provider_Analysis'][span[text()=' Claim Summary by Providers ']]")))
-        providers_link.click()
-        time.sleep(5)
-        select_date_month_day(driver, start_date, "txtFromDate")
-        select_date_month_day(driver, end_date, "txtToDate")
-        search_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "btnSearch")))
-        driver.execute_script("arguments[0].click();", search_button)
-        time.sleep(10)
-        dropdown = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "select.ui-pg-selbox")))
-        driver.execute_script("arguments[0].scrollIntoView(true);", dropdown)
-        select = Select(dropdown)
-        select.select_by_value("100")
-        time.sleep(5)
-        claim_data_recent = extract_grid_data_clm_summary(driver)
-        claim_df_recent = pd.DataFrame(claim_data_recent)
-        for col in numeric_cols_claim:
-            claim_df_recent[col] = pd.to_numeric(claim_df_recent[col], errors='coerce')
-        claim_df_recent['Avg Claim per Visit'] = claim_df_recent['Total Claim'] / claim_df_recent['No of Visits']
-        claim_data_by_year[2025] = claim_df_recent
-
+        print("Scraping complete!")
         return patient_data_by_year, claim_data_by_year, mc_data_by_year, "Data scraped successfully!"
     except Exception as e:
+        print(f"Error: {str(e)}")
         return None, None, None, f"Error: {str(e)}"
     finally:
         driver.quit()
