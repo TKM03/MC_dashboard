@@ -1,0 +1,7 @@
+echo "streamlit
+pandas
+matplotlib
+seaborn
+selenium
+webdriver_manager
+numpy" > requirements.txt
