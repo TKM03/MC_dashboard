@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.firefox import GeckoDriverManager
-from pyvirtualdisplay import Display
 from datetime import datetime
 import time
 import numpy as np
@@ -162,13 +161,9 @@ def extract_grid_data_mc(driver):
     return data
 
 def scrape_data(url, user_id, password):
-    """Scrape data from the website using Firefox WebDriver in headless mode with a virtual display."""
-    # Start a virtual display for headless browsing
-    display = Display(visible=0, size=(800, 600))
-    display.start()
-
+    """Scrape data from the website using Firefox WebDriver in headless mode."""
     firefox_options = FirefoxOptions()
-    firefox_options.add_argument('--headless')
+    firefox_options.add_argument('--headless')  # Run Firefox in headless mode without Xvfb
     driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()), options=firefox_options)
     
     start_year = 2024
@@ -279,7 +274,6 @@ def scrape_data(url, user_id, password):
         return None, None, None, f"Error: {str(e)}"
     finally:
         driver.quit()
-        display.stop()  # Stop the virtual display
 
 # --- Plotting Functions ---
 def generate_dashboard_charts(patient_data_by_year, claim_data_by_year, mc_data_by_year, year):
