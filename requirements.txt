@@ -5,3 +5,4 @@ seaborn
 selenium
 webdriver_manager
 numpy
+pyvirtualdisplay
