@@ -483,9 +483,10 @@ def main():
         st.title("Claims Analysis Dashboard")
         st.subheader("Login Details")
         
-        url = st.text_input("Website URL", key="url")
-        user_id = st.text_input("User ID", key="user_id")
-        password = st.text_input("Password", type="password", key="password")
+        # Use Streamlit secrets for deployment, fall back to user input for local testing
+        url = st.secrets.get("URL", "") if st.secrets else st.text_input("Website URL", key="url", value="http:")  # Default to your provided URL
+        user_id = st.secrets.get("USER_ID", "") if st.secrets else st.text_input("User ID", key="user_id", value="")  # Default to your provided USER_ID
+        password = st.secrets.get("PASSWORD", "") if st.secrets else st.text_input("Password", type="password", key="password", value="")  # Default to your provided PASSWORD
         
         if st.button("Scrape Data", key="scrape_button"):
             if not all([url, user_id, password]):
